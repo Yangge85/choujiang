@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport"
+        content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta charset="utf-8">
+    <title>刮刮卡</title>
+    <style type="text/css">
+    </style>
+</head>
+
+<body>
+    <div id="gp-dvi-c"></div>
+    <div id="gp-dvi-c"></div>
+    <div id="gp-dvi-c"></div>
+    <div id="gp-dvi-c"></div>
+    <div id="gp-dvi-c"></div>
+</body>
+<script type="text/javascript">
+    gginit();
+
+    function ggconfig() {
+        jackpots = ["一等奖", "二等奖", "三等奖", "四等奖", "纪念奖"]; //文字奖品
+        // pici = '1.jpg';//图片奖品 存在即使用图片
+        pici = '';
+
+        cw = 300; //刮刮卡宽度
+        ch = 150; //刮刮卡高度
+        grd = 100; //干扰点数量
+        bcw = 16; //刮刮笔触大小
+    }
+
+    function gginit() {
+        ggconfig();
+
+        //一等奖概率2% 二等奖概率6% 三等奖概率14% 四等奖概率30% 奖励奖概率48%
+        let jackpot = randmn(0, 49);
+        let jkp = '';
+        if (jackpot == 0) {
+            jkp = jackpots[0];
+        } else if (jackpot > 0 && jackpot < 4) {
+            jkp = jackpots[1];
+        } else if (jackpot > 3 && jackpot < 11) {
+            jkp = jackpots[2];
+        } else if (jackpot > 10 && jackpot < 26) {
+            jkp = jackpots[3];
+        } else {
+            jkp = jackpots[4];
+        }
+
+        dvic = document.getElementById('gp-dvi-c');
+        dvic.style.position = 'relative';
+        dvic.style.margin = '100px auto';
+        dvic.style.width = cw + 'px';
+        dvic.style.height = ch + 'px';
+
+        cvspj = document.createElement('canvas');
+        cvspj.width = cw;
+        cvspj.height = ch;
+        cvspj.style.position = 'absolute';
+        dvic.appendChild(cvspj);
+
+        let ctx0 = cvspj.getContext("2d");
+        if (pici) {
+            let img = new Image()
+            img.onload = function () {
+                ctx0.drawImage(img, 0, 0, cw, ch)
+            }
+            img.src = pici;
+        } else {
+            ctx0.font = '30px Arial';
+            ctx0.fillStyle = "rgba(255, 0, 0, 1)";
+            let text0 = jkp;
+            let txtw0 = ctx0.measureText(text0).width;
+            let txth0 = ctx0.measureText('M').width;
+            ctx0.fillText(text0, cw / 2 - txtw0 / 2, ch / 2 + txth0 / 2);
+            ctx0.strokeStyle = 'rgba(255, 0, 0, 1)';
+            ctx0.strokeRect(0, 0, cw, ch);
+        }
+
+        ggkcvs();
+    }
+
+    function ggkcvs() {
+        cvsggk = document.createElement('canvas');
+        cvsggk.width = cw;
+        cvsggk.height = ch;
+        cvsggk.style.cursor = 'pointer';
+        cvsggk.style.position = 'absolute';
+        cvsggk.style.filter = 'blur(0.7px)';
+        dvic.appendChild(cvsggk);
+        ctx = cvsggk.getContext("2d");
+        ctx.fillStyle = "rgba(200, 200, 200, 1)";
+        ctx.fillRect(0, 0, cw, ch);
+        ctx.font = '20px Arial';
+        ctx.fillStyle = "rgba(255, 255, 255, 1)"
+        let text = "祝君好运";
+        let txtw = ctx.measureText(text).width;
+        let txth = ctx.measureText('M').width;
+        ctx.fillText(text, cw / 2 - txtw / 2, ch / 2 + txth / 2);
+        let fillColor = [
+            "rgba(255, 0, 0, 0.8)",
+            "rgba(255, 255, 0, 0.8)",
+            "rgba(255, 0, 255, 0.8)",
+            "rgba(0, 255, 255, 0.8)"
+        ];
+        for (let i = 0; i < grd; i++) {
+            ctx.beginPath();
+            ctx.fillStyle = fillColor[randmn(0, 3)];
+            ctx.arc(randmn(0, cw), randmn(0, ch), 1, 0, 2 * Math.PI);
+            ctx.closePath();
+            ctx.fill();
+        }
+        cvsggk.addEventListener("mousedown", handlerDownFn);
+        cvsggk.addEventListener("mousemove", handlerMoveFn);
+        cvsggk.addEventListener("mouseup", handlerUpFn);
+        cvsggk.addEventListener('touchstart', handlerDownFn);
+        cvsggk.addEventListener('touchmove', handlerMoveFn);
+        cvsggk.addEventListener('touchend', handlerUpFn);
+        hasDown = false;
+    }
+
+    function randmn(n, m) {
+        let c = m - n + 1;
+        return Math.floor(Math.random() * c + n);
+    }
+
+    function handlerDownFn(event) {
+        hasDown = true;
+        // console.log(event);
+    }
+
+    function handlerMoveFn(event) {
+        if (hasDown) {
+            let x = 0,
+                y = 0;
+            if (event.offsetX && event.offsetY) {
+                x = event.offsetX;
+                y = event.offsetY;
+            } else {
+                let bcr = cvspj.getBoundingClientRect();
+                x = event.touches[0].clientX - bcr.left;
+                y = event.touches[0].clientY - bcr.top;
+            }
+            // console.log(x, y)
+            ctx.beginPath();
+            ctx.arc(x, y, bcw, 0, 2 * Math.PI);
+            ctx.globalCompositeOperation = "destination-out";
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    function handlerUpFn(event) {
+        let imageData = ctx.getImageData(0, 0, cw, ch),
+            length = imageData.data.length,
+            transparentCount = 0;
+        for (let i = 3; i < length; i += 4) {
+            if (imageData.data[i] == 0 || imageData.data[i] == 1) transparentCount++;
+        }
+        // console.log(transparentCount, length)
+        if (transparentCount >= (length / 4 / 3)) {
+            console.log('刮开啦');
+            ctx.clearRect(0, 0, cw, ch);
+            cvsggk.removeEventListener("mousedown", handlerDownFn);
+            cvsggk.removeEventListener("mousemove", handlerMoveFn);
+            cvsggk.removeEventListener("mouseup", handlerUpFn);
+            cvsggk.removeEventListener('touchstart', handlerDownFn);
+            cvsggk.removeEventListener('touchmove', handlerMoveFn);
+            cvsggk.removeEventListener('touchend', handlerUpFn);
+        }
+        hasDown = false;
+    }
+</script>
+
+</html>
